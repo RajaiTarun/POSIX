@@ -1,3 +1,6 @@
+#include "BuiltinEngine.h"
+#include "ProcessExecutor.h"
+
 #include <cstddef>
 #include <iostream>
 #include <string>
@@ -50,7 +53,7 @@ string getUserName() {
   if (buffer != nullptr)
     return string(buffer);
 
-  // fallback if the above methods fails, robus and will work on stripped os,
+  // fallback if the above methods fails, robust and will work on stripped os,
   // automated grader type usecases also
   struct passwd *pw = getpwuid(geteuid());
   if (pw != nullptr && pw->pw_name != nullptr) {
@@ -142,6 +145,8 @@ int main() {
   string userName = getUserName();
   string homeDir = getHomeDirectory();
 
+  BuiltinEngine builtin(homeDir);
+  ProcessExecutor processExecutor;
   while (1) {
     string cwd = getCurrentWorkingDirectory();
     string displayPath = contractHomeDirectory(cwd, homeDir);
@@ -168,16 +173,17 @@ int main() {
       tokens = tokenize(commandChunks[i]);
       if (tokens.empty())
         continue;
-
       if (tokens[0] == "exit") {
         return 0;
       }
 
-      cout << "tokenized command" << i + 1 << endl;
-      for (auto s : tokens) {
-        cout << "[ " << s << " ]";
+      // checking if the command is builtin
+      bool isBuiltin = builtin.execute(tokens);
+
+      // if it is not a builtin, giving it to processExecutor
+      if (!isBuiltin) {
+        processExecutor.execute_foreground(tokens);
       }
-      cout << endl;
     }
   }
   return 0;

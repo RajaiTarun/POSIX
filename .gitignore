@@ -1,0 +1,11 @@
+#Executables
+*.out
+*.exe
+
+#PDF
+*.pdf
+
+
+notes/
+.vscode/
+.DS_Store
