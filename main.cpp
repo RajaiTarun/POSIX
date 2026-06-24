@@ -1,4 +1,5 @@
 #include "BuiltinEngine.h"
+#include "JobController.h"
 #include "ProcessExecutor.h"
 
 #include <cstddef>
@@ -146,8 +147,13 @@ int main() {
   string homeDir = getHomeDirectory();
 
   BuiltinEngine builtin(homeDir);
+  JobController jobController;
   ProcessExecutor processExecutor;
+
   while (1) {
+    // we first check if any background process is done or not
+    jobController.sweepCompletedJobs();
+
     string cwd = getCurrentWorkingDirectory();
     string displayPath = contractHomeDirectory(cwd, homeDir);
 
@@ -177,12 +183,29 @@ int main() {
         return 0;
       }
 
+      bool isBackground = false;
+      if (tokens.back() == "&") {
+        isBackground = true;
+        tokens.pop_back();
+      }
+
+      string cleanCmdText = "";
+      for (int i = 0; i < tokens.size(); i++) {
+        cleanCmdText += tokens[i];
+        if (i != tokens.size() - 1)
+          cleanCmdText += " ";
+      }
       // checking if the command is builtin
       bool isBuiltin = builtin.execute(tokens);
 
       // if it is not a builtin, giving it to processExecutor
       if (!isBuiltin) {
-        processExecutor.execute_foreground(tokens);
+        if (isBackground) {
+          processExecutor.execute_background(tokens, cleanCmdText,
+                                             jobController);
+        } else {
+          processExecutor.execute_foreground(tokens);
+        }
       }
     }
   }

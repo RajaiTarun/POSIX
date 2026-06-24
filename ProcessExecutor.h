@@ -1,4 +1,5 @@
 #pragma once
+#include "JobController.h"
 #include <string>
 #include <vector>
 
@@ -8,4 +9,7 @@ private:
 
 public:
   bool execute_foreground(const std::vector<std::string> &tokens);
+  bool execute_background(const std::vector<std::string> &tokens,
+                          const std::string &rawCommandString,
+                          JobController &JobController);
 };

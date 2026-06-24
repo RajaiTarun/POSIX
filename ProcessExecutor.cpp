@@ -60,3 +60,26 @@ bool ProcessExecutor::execute_foreground(const vector<string> &tokens) {
     return false;
   }
 }
+
+bool ProcessExecutor::execute_background(const std::vector<std::string> &tokens,
+                                         const std::string &rawCommandString,
+                                         JobController &JobController) {
+  if (tokens.empty()) {
+    return false;
+  }
+
+  vector<char *> c_args = convertToc_args(tokens);
+
+  pid_t pid = fork();
+  if (pid == 0) {
+    execvp(c_args[0], c_args.data());
+    perror(c_args[0]);
+    exit(EXIT_FAILURE);
+  } else if (pid > 0) {
+    JobController.addJob(pid, rawCommandString);
+    return true;
+  } else {
+    perror("fork failed");
+    return false;
+  }
+}
