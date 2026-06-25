@@ -1,6 +1,7 @@
 #include "ProcessExecutor.h"
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -38,6 +39,9 @@ bool ProcessExecutor::execute_foreground(const vector<string> &tokens) {
   pid_t pid = fork();
 
   if (pid == 0) {
+    // FOREGROUND CHILD: Take off the vest so the user can kill me!
+    signal(SIGINT, SIG_DFL);
+    signal(SIGTSTP, SIG_DFL);
     // this is the child process, because pid is 0 in child process and non zero
     // in parent process
 
@@ -51,7 +55,10 @@ bool ProcessExecutor::execute_foreground(const vector<string> &tokens) {
     exit(EXIT_FAILURE);
   } else if (pid > 0) {
     int status;
-    waitpid(pid, &status, 0);
+    waitpid(pid, &status, WUNTRACED);
+    if (WIFSTOPPED(status)) {
+      cout << "\n[Suspended] PID: " << pid << endl;
+    }
     return true;
   } else {
     // this means the fork returned -1 and this is an OS failure, so we raise

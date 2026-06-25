@@ -2,7 +2,9 @@
 #include "JobController.h"
 #include "ProcessExecutor.h"
 
+#include <csignal>
 #include <cstddef>
+#include <cstdio>
 #include <iostream>
 #include <string>
 
@@ -141,7 +143,21 @@ vector<string> tokenize(const string &rawChunk) {
   return tokenized;
 }
 
+// The hardware-safe signal flag
+volatile sig_atomic_t sigint_pressed = 0;
+
+void sigint_handler(int sig) {
+  sigint_pressed = 1; // Flip the flag when Ctrl+C is pressed
+}
+
 int main() {
+  struct sigaction sa;
+  sa.sa_handler = sigint_handler;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sigaction(SIGINT, &sa, nullptr);
+  // signal(SIGINT, SIG_IGN);
+  signal(SIGTSTP, SIG_IGN);
   string hostName = getSystemName();
   string userName = getUserName();
   string homeDir = getHomeDirectory();
@@ -165,8 +181,19 @@ int main() {
     // taking input from user
     string rawInput;
     if (!getline(cin, rawInput)) {
-      cout << "\n";
-      break;
+
+      if (sigint_pressed) {
+        sigint_pressed = 0;
+        cin.clear();
+        clearerr(stdin);
+        cout << "\n";
+        continue;
+      }
+      // case A : The user pressed Ctrl + D(EOF) we must exit gracefully
+      if (cin.eof()) {
+        cout << "\n";
+        break;
+      }
     }
 
     // now we need to make chunk based on ';'
