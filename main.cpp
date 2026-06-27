@@ -14,6 +14,7 @@
 #include <sstream>
 #include <sys/types.h> // gives us the 'uid_t' type
 #include <unistd.h>    // gives the gethostname(), getlogin() sys call
+#include <vector>
 
 using namespace std;
 
@@ -133,6 +134,55 @@ vector<string> splitCommands(const string &rawInput) {
   return commands;
 }
 
+vector<CommandStage> parsePipeline(const vector<string> &rawTokens) {
+  vector<CommandStage> stages;
+  CommandStage currentStage;
+
+  for (size_t i = 0; i < rawTokens.size(); i++) {
+    const string &token = rawTokens[i];
+
+    if (token == "|") {
+      // Pipe hit! Push the completed box and reset for the next command.
+      stages.push_back(currentStage);
+      currentStage = CommandStage();
+    } else if (token == "<") {
+      // basically after this char we have the input file for our input command,
+      // so there should be a token after this index
+      if (i + 1 < rawTokens.size()) {
+        currentStage.inputFile = rawTokens[i + 1];
+        i++;
+      }
+      // else means that there is no input file, and this is an error
+      else {
+        cerr << "Syntax error : no input file specified" << endl;
+      }
+    } else if (token == ">" || token == ">>") {
+      if (token == ">>") {
+        currentStage.isAppend = true;
+      } else {
+        currentStage.isAppend = false;
+      }
+      if (i + 1 < rawTokens.size()) {
+        currentStage.outputFile = rawTokens[i + 1];
+        i++;
+      } else {
+        cerr << "Syntax error : not output file specified" << endl;
+      }
+    } else {
+      // Regular command argument (e.g., "ls", "-la", "/tmp")
+      currentStage.tokens.push_back(token);
+    }
+  }
+
+  // Push the final stage after the loop finishes
+  if (!currentStage.tokens.empty() || !currentStage.inputFile.empty() ||
+      !currentStage.outputFile.empty()) {
+    stages.push_back(currentStage);
+  }
+
+  return stages;
+}
+
 vector<string> tokenize(const string &rawChunk) {
   vector<string> tokenized;
   stringstream ss(rawChunk);
@@ -202,6 +252,19 @@ int main() {
     // now we need to preprocess this and make tokens from the chunks
     vector<string> tokens;
     for (int i = 0; i < commandChunks.size(); i++) {
+      string rawChunk = commandChunks[i];
+      if (rawChunk.find('|') != string::npos ||
+          rawChunk.find('<') != string::npos ||
+          rawChunk.find('>') != string::npos) {
+        vector<string> flatTokens = tokenize(rawChunk);
+        if (flatTokens.empty())
+          continue;
+
+        vector<CommandStage> stages = parsePipeline(flatTokens);
+
+        processExecutor.execute_pipeline(stages);
+        continue;
+      }
       tokens.clear();
       tokens = tokenize(commandChunks[i]);
       if (tokens.empty())
@@ -217,9 +280,9 @@ int main() {
       }
 
       string cleanCmdText = "";
-      for (int i = 0; i < tokens.size(); i++) {
-        cleanCmdText += tokens[i];
-        if (i != tokens.size() - 1)
+      for (int j = 0; j < tokens.size(); j++) {
+        cleanCmdText += tokens[j];
+        if (j != tokens.size() - 1)
           cleanCmdText += " ";
       }
       // checking if the command is builtin
