@@ -1,4 +1,5 @@
 #include "BuiltinEngine.h"
+#include "Commands/LSCommand.h"
 #include <cstdio>
 #include <iostream>
 #include <string>
@@ -77,6 +78,10 @@ bool BuiltinEngine::execute(const std::vector<std::string> &tokens) {
     return execute_echo(tokens);
   } else if (tokens[0] == "cd") {
     return execute_cd(tokens);
+  } else if (tokens[0] == "ls") {
+    LSCommand LS;
+    LS.execute(tokens);
+    return true;
   }
   return false;
 }
