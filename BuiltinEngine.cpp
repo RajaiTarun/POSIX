@@ -1,5 +1,6 @@
 #include "BuiltinEngine.h"
 #include "Commands/LSCommand.h"
+#include "Commands/SearchCommand.h"
 #include <cstdio>
 #include <iostream>
 #include <string>
@@ -81,6 +82,10 @@ bool BuiltinEngine::execute(const std::vector<std::string> &tokens) {
   } else if (tokens[0] == "ls") {
     LSCommand LS;
     LS.execute(tokens);
+    return true;
+  } else if (tokens[0] == "search") {
+    SearchCommand S;
+    S.execute(tokens);
     return true;
   }
   return false;
