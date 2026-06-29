@@ -1,4 +1,5 @@
 #include "BuiltinEngine.h"
+#include "HistoryManager.h"
 #include "JobController.h"
 #include "ProcessExecutor.h"
 
@@ -206,15 +207,15 @@ int main() {
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
   sigaction(SIGINT, &sa, nullptr);
-  // signal(SIGINT, SIG_IGN);
   signal(SIGTSTP, SIG_IGN);
   string hostName = getSystemName();
   string userName = getUserName();
   string homeDir = getHomeDirectory();
 
-  BuiltinEngine builtin(homeDir);
   JobController jobController;
   ProcessExecutor processExecutor;
+  HistoryManager historyManager(getHomeDirectory());
+  BuiltinEngine builtin(homeDir, historyManager);
 
   while (1) {
     // we first check if any background process is done or not
@@ -241,6 +242,7 @@ int main() {
       }
       // case A : The user pressed Ctrl + D(EOF) we must exit gracefully
       if (cin.eof()) {
+        historyManager.saveToFile();
         cout << "\n";
         break;
       }
@@ -253,6 +255,7 @@ int main() {
     vector<string> tokens;
     for (int i = 0; i < commandChunks.size(); i++) {
       string rawChunk = commandChunks[i];
+      historyManager.addCommand(commandChunks[i]);
       if (rawChunk.find('|') != string::npos ||
           rawChunk.find('<') != string::npos ||
           rawChunk.find('>') != string::npos) {
@@ -270,6 +273,7 @@ int main() {
       if (tokens.empty())
         continue;
       if (tokens[0] == "exit") {
+        historyManager.saveToFile();
         return 0;
       }
 
@@ -299,5 +303,6 @@ int main() {
       }
     }
   }
+  historyManager.saveToFile();
   return 0;
 }

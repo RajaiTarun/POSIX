@@ -2,14 +2,17 @@
 #include "Commands/LSCommand.h"
 #include "Commands/PinfoCommand.h"
 #include "Commands/SearchCommand.h"
+#include "HistoryManager.h"
 #include <cstdio>
+#include <deque>
 #include <iostream>
 #include <string>
 #include <unistd.h>
 #include <vector>
 using namespace std;
 
-BuiltinEngine::BuiltinEngine(string homeDir) {
+BuiltinEngine::BuiltinEngine(string homeDir, HistoryManager &historyManager)
+    : historyManager(historyManager) {
   prevDir = "";
   this->homeDir = homeDir;
 }
@@ -73,6 +76,34 @@ bool BuiltinEngine::execute_cd(const std::vector<std::string> &tokens) {
   return true;
 }
 
+bool BuiltinEngine::execute_history(const std::vector<std::string> &tokens) {
+  int numToShow = 10;
+  if (tokens.size() > 2) {
+    cerr << "invalid history command arguments";
+    return true;
+  }
+  if (tokens.size() > 1) {
+    for (int i = 0; i < tokens[1].size(); i++) {
+      if (tokens[1][i] < '0' || tokens[1][i] > '9') {
+        cerr << "invalid history command arguments" << endl;
+        return true;
+      }
+    }
+    try {
+      numToShow = stoi(tokens[1]);
+    } catch (...) {
+      cerr << "invalid history command arguments" << endl;
+      return true;
+    }
+  }
+
+  deque<string> ledger = historyManager.getHistory(numToShow);
+  for (auto it = ledger.rbegin(); it != ledger.rend(); it++) {
+    cout << *it << endl;
+  }
+  return true;
+}
+
 bool BuiltinEngine::execute(const std::vector<std::string> &tokens) {
   if (tokens[0] == "pwd") {
     return execute_pwd();
@@ -92,6 +123,8 @@ bool BuiltinEngine::execute(const std::vector<std::string> &tokens) {
     PinfoCommand PI;
     PI.execute(tokens);
     return true;
+  } else if (tokens[0] == "history") {
+    return execute_history(tokens);
   }
   return false;
 }
