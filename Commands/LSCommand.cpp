@@ -23,11 +23,11 @@ void LSCommand::execute(const std::vector<std::string> tokens) {
 
   // the -l, -a, -la, -al, etc flags can be present anywhere in the command
   // tokens will look like : ["ls", "-l / -a / -la / -al", "dir1", "dir2"]
-  for (int i = 1; i < tokens.size(); i++) {
+  for (size_t i = 1; i < tokens.size(); i++) {
     const string &token = tokens[i];
     // if the tokens first char is '-' means that this will be a flag
     if (token[0] == '-') {
-      for (int j = 1; j < token.size(); j++) {
+      for (size_t j = 1; j < token.size(); j++) {
         if (token[j] == 'l') {
           long_format = true;
         } else if (token[j] == 'a') {
@@ -49,7 +49,7 @@ void LSCommand::execute(const std::vector<std::string> tokens) {
 
   // now that we have all the target directories and the long format and hidden
   // files state, we can start printing
-  for (int i = 0; i < target_dirs.size(); i++) {
+  for (size_t i = 0; i < target_dirs.size(); i++) {
     if (long_format) {
       print_long(target_dirs[i], show_hidden);
     } else {

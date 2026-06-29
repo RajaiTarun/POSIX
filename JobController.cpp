@@ -1,4 +1,5 @@
 #include "JobController.h"
+#include <cstddef>
 #include <iostream>
 #include <sys/wait.h>
 using namespace std;
@@ -19,7 +20,7 @@ void JobController::sweepCompletedJobs() {
   pid_t reapedPid;
 
   while ((reapedPid = waitpid(-1, &status, WNOHANG)) > 0) {
-    for (int i = 0; i < activeJobs.size(); i++) {
+    for (size_t i = 0; i < activeJobs.size(); i++) {
       if (activeJobs[i].pid == reapedPid) {
         cout << "[ " << activeJobs[i].jobId << " ] done "
              << activeJobs[i].command << endl;

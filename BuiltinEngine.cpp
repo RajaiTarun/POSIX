@@ -28,7 +28,7 @@ bool BuiltinEngine::execute_pwd() {
 }
 
 bool BuiltinEngine::execute_echo(const std::vector<std::string> &tokens) {
-  for (int i = 1; i < tokens.size(); i++) {
+  for (size_t i = 1; i < tokens.size(); i++) {
     cout << tokens[i];
     if (i != tokens.size() - 1)
       cout << " ";
@@ -83,7 +83,7 @@ bool BuiltinEngine::execute_history(const std::vector<std::string> &tokens) {
     return true;
   }
   if (tokens.size() > 1) {
-    for (int i = 0; i < tokens[1].size(); i++) {
+    for (size_t i = 0; i < tokens[1].size(); i++) {
       if (tokens[1][i] < '0' || tokens[1][i] > '9') {
         cerr << "invalid history command arguments" << endl;
         return true;

@@ -19,7 +19,7 @@ vector<char *> ProcessExecutor::convertToc_args(const vector<string> &tokens) {
   c_args.reserve(tokens.size() + 1);
 
   // 2. now converting the tokens to char* ancient c style strings
-  for (int i = 0; i < tokens.size(); i++) {
+  for (size_t i = 0; i < tokens.size(); i++) {
     c_args.push_back(const_cast<char *>(tokens[i].c_str()));
   }
 

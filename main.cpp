@@ -23,6 +23,31 @@ using namespace std;
 #define HOST_NAME_MAX 255
 #endif
 
+void welcome() {
+  cout << "\033[1;36m=========================================================="
+          "==========\033[0m"
+       << endl;
+  cout << "\033[1;32m   ____  _   _ _____ _     _     \033[0m" << endl;
+  cout << "\033[1;32m  / ___|| | | | ____| |   | |    \033[0m" << endl;
+  cout << "\033[1;32m  \\___ \\| |_| |  _| | |   | |    \033[0m" << endl;
+  cout << "\033[1;32m   ___) |  _  | |___| |___| |___ \033[0m" << endl;
+  cout << "\033[1;32m  |____/|_| |_|_____|_____|_____|\033[0m" << endl;
+  cout << "                                 " << endl;
+  cout << "\033[1;36m=========================================================="
+          "==========\033[0m"
+       << endl;
+  cout << "\033[1;33m Core Features: \033[0m Multi-Pipelines | Async Signals | "
+          "Persistence History"
+       << endl;
+  cout << "\033[1;33m System Architecture: \033[0m POSIX Compliant "
+          "Shell v1.0"
+       << endl;
+  cout << "\033[1;36m----------------------------------------------------------"
+          "----------\033[0m"
+       << endl
+       << endl;
+}
+
 // helper function, i don't have c++ 20 so am creating starts_with function
 
 // functions for building prompt
@@ -111,7 +136,7 @@ string contractHomeDirectory(const string &cwd, const string &home) {
 
 // functions for building lexer
 bool isPureWhitespace(const string &str) {
-  int i = 0;
+  size_t i = 0;
   while (i < str.length() && isspace(str[i])) {
     i++;
   }
@@ -198,6 +223,7 @@ vector<string> tokenize(const string &rawChunk) {
 volatile sig_atomic_t sigint_pressed = 0;
 
 void sigint_handler(int sig) {
+  (void)sig;
   sigint_pressed = 1; // Flip the flag when Ctrl+C is pressed
 }
 
@@ -216,6 +242,7 @@ int main() {
   ProcessExecutor processExecutor;
   HistoryManager historyManager(getHomeDirectory());
   BuiltinEngine builtin(homeDir, historyManager);
+  welcome();
 
   while (1) {
     // we first check if any background process is done or not
@@ -253,7 +280,7 @@ int main() {
 
     // now we need to preprocess this and make tokens from the chunks
     vector<string> tokens;
-    for (int i = 0; i < commandChunks.size(); i++) {
+    for (size_t i = 0; i < commandChunks.size(); i++) {
       string rawChunk = commandChunks[i];
       historyManager.addCommand(commandChunks[i]);
       if (rawChunk.find('|') != string::npos ||
@@ -284,7 +311,7 @@ int main() {
       }
 
       string cleanCmdText = "";
-      for (int j = 0; j < tokens.size(); j++) {
+      for (size_t j = 0; j < tokens.size(); j++) {
         cleanCmdText += tokens[j];
         if (j != tokens.size() - 1)
           cleanCmdText += " ";
